@@ -1,45 +1,22 @@
 {
     "name": "kipchak/starter",
-    "description": "Kipchak PHP API Development Kit (ADK) Starter Project",
-    "type": "template",
-    "homepage": "https://mamluk.net",
+    "description": "Kipchak API Development Kit (ADK) Starter Project",
+    "type": "project",
+    "homepage": "https://kipchak.dev",
     "license": "MIT",
     "require": {
         "php": ">=8.4",
         "kipchak/core": "^3.15",
-        "kipchak/driver-anthropic": "^2",
-        "kipchak/driver-clickhouse": "^1.1",
-        "kipchak/driver-cloudflare-dns": "^1",
-        "kipchak/driver-cloudns": "^1",
-        "kipchak/driver-couchdb": "^1",
-        "kipchak/driver-doctrine": "^1",
-        "kipchak/driver-feature-flags": "^1.0",
-        "kipchak/driver-filecache": "^1",
-        "kipchak/driver-git": "^1",
-        "kipchak/driver-http": "^2",
-        "kipchak/driver-logger": "^1",
-        "kipchak/driver-memcached": "^1",
-        "kipchak/driver-nats": "^1.0",
-        "kipchak/driver-openai": "^2",
-        "kipchak/driver-rabbitmq": "^1",
-        "kipchak/driver-s3": "^1",
-        "kipchak/driver-sftp": "^1.1",
-        "kipchak/driver-vector": "^1.0",
-        "kipchak/middleware-auth-jwks": "^1",
-        "kipchak/middleware-auth-key": "^1",
-        "kipchak/middleware-error": "^1",
-        "kipchak/middleware-feature-flags": "^1.0",
-        "kipchak/middleware-response-cache": "^1.0",
-        "kipchak/middleware-subashi": "^1",
-        "unleash/client": "^2.11"
+        "kipchak/driver-config": "^1.33",
+        "kipchak/driver-logger": "^1.38",
+        "kipchak/middleware-error": "^1.32"
     },
     "require-dev": {
         "phpunit/phpunit": "^12"
     },
     "autoload": {
         "psr-4": {
-            "Api\\": "api/",
-            "Database\\": "database/"
+            "Api\\": "api/"
         }
     },
     "autoload-dev": {
@@ -47,13 +24,12 @@
             "Tests\\": "tests/"
         }
     },
+    "scripts": {
+        "test": "phpunit",
+        "openapi": "php bin/openapi openapi.yaml"
+    },
     "config": {
         "preferred-install": "dist",
-        "sort-packages": true,
-        "allow-plugins": {
-            "php-http/discovery": true
-        }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+        "sort-packages": true
+    }
 }

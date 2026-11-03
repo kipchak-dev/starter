@@ -2,258 +2,120 @@
 
 # Kipchak Starter
 
-This is the starter project for [Kipchak](https://kipchak.dev) — a PHP 8.4+ API Development Kit (ADK) built on top of [Slim Framework v4](https://www.slimframework.com/) and optimised for [FrankenPHP](https://frankenphp.dev/) in worker mode. It runs on PHP 8.4 and 8.5.
+The starter project for [Kipchak](https://kipchak.dev), a PHP API Development Kit built on
+[Slim Framework 4](https://www.slimframework.com/) and run on [FrankenPHP](https://frankenphp.dev/) in worker mode.
+It runs on PHP 8.4 and 8.5.
 
-> Upgrading an existing project? See the [upgrade guide](https://kipchak.dev/docs/upgrades) for the changes in each major version.
+It contains one versioned resource, with its route, controller, DTO and model, an OpenAPI document generated from
+the code, a health check and tests. Nothing else is installed: add the drivers and middleware your API needs.
 
-The starter demonstrates all bundled drivers and middlewares, lays out an opinionated project structure, and is fully usable as a vanilla Slim application. Nothing in Slim is restricted.
+**Documentation: <https://kipchak.dev>**
 
-**For complete documentation, visit <https://kipchak.dev>.**
-
----
-
-## Install
-
-```bash
-composer create-project kipchak/starter [api-name] -s dev
-```
-
-Replace `[api-name]` with the directory name for your new project.
+> Upgrading an existing project? See the [upgrade guide](https://kipchak.dev/docs/upgrades).
 
 ---
 
-## Running with Docker
+## Create a project
 
-The starter ships with a `docker-compose.yml` that brings up the full stack:
-
-```bash
-docker compose up
-```
-
-This starts the following services:
-
-| Service    | Description                           | Port(s)            |
-|------------|---------------------------------------|--------------------|
-| `api`      | FrankenPHP + Kipchak                  | `80`, `2019`       |
-| `mysql`    | MySQL 8                               | internal           |
-| `couchdb`  | Apache CouchDB 3.5                    | `5984`             |
-| `memcached`| Memcached 1.6                         | internal           |
-| `rabbitmq` | RabbitMQ 4 with management UI         | `5672`, `15672`    |
-
-Hot-reload is enabled via Docker Compose `watch` — changes to your code restart the worker automatically.
-
-### CouchDB first-run setup
-
-CouchDB requires a `_users` database on first start. Run once after `docker compose up`:
+With PHP 8.4 or later and Composer:
 
 ```bash
-curl -X PUT http://api:api@localhost:5984/_users
-curl -X PUT http://api:api@localhost:5984/api
+composer create-project kipchak/starter my-api
+cd my-api
+docker compose up --watch
 ```
+
+With Docker alone:
+
+```bash
+docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/app -w /app composer create-project kipchak/starter my-api
+cd my-api
+docker compose up --watch
+```
+
+The API is then on <http://localhost:8080>. `--watch` restarts the worker when a file changes. To use another port,
+start it with `PORT=8081 docker compose up --watch`.
+
+| Request | Response |
+|---|---|
+| `GET /v1/sultans` | Every sultan |
+| `GET /v1/sultans/4` | One sultan; an unknown ID returns a 404 |
+| `GET /openapi.json` | The OpenAPI document, generated from the code |
+| `GET /status` | A health check |
 
 ---
 
-## Project Structure
+## Project structure
 
-```
+```text
 ├── api/
-│   ├── Controllers/        # HTTP request handlers, versioned under v1/, v2/, etc.
-│   ├── DataTransferObjects/ # Input/output contracts, versioned alongside controllers
-│   ├── Entities/           # Database schema representations (Doctrine ORM, CouchDB)
-│   ├── Middlewares/        # Custom per-project middleware
-│   └── Models/             # Business logic
-├── config/                 # PHP config files (one per driver/middleware)
-├── drivers/
-│   └── drivers.php         # Driver initialisation order
-├── middlewares/
-│   └── middlewares.php     # Global middleware registration
-├── routes/                 # Route definitions, versioned under v1/, v2/, etc.
-└── html/
-    ├── index.php           # FrankenPHP worker-mode entry point
-    └── index.nonworker.php # Standard PHP entry point
+│   ├── Controllers/          # Request handlers, versioned under v1/, v2/ and so on
+│   ├── DataTransferObjects/  # The API contract: one DTO per shape of data, versioned with the controllers
+│   ├── Middlewares/          # Middleware of your own
+│   ├── Models/               # Business logic
+│   ├── OpenApi/              # The top of the OpenAPI document: title, version, servers, shared responses
+│   └── Utils/                # Code shared across the API
+├── bin/openapi               # Writes the OpenAPI document to a file
+├── config/                   # One PHP file per driver or middleware, returning an array
+├── drivers/drivers.php       # The drivers the API initialises, in order
+├── middlewares/middlewares.php # Middleware applied to every request
+├── routes/                   # Route files, loaded at boot and versioned by folder
+├── html/
+│   ├── index.php             # FrankenPHP worker-mode entry point
+│   └── index.nonworker.php   # Entry point without worker mode
+├── tests/                    # PHPUnit tests, run against the booted API
+└── AGENTS.md                 # Instructions for coding assistants
 ```
 
----
+A request follows the folders in order: a **route** names the **controller** that handles it; the controller reads
+the request and calls a **model**; the model holds the business logic and returns **DTOs**; the controller returns
+them in Kipchak's response envelope:
 
-## Philosophy
-
-Kipchak has an opinionated view of how API layers should be structured. These definitions follow the natural flow of a request.
-
-- **Routes** — Entry points into your API. Defined in `routes/`, versioned by directory (e.g. `routes/v1/`). They declare the URL, HTTP verb, and which controller handles the request.
-
-- **Middlewares** — Reusable logic applied before a request reaches a controller or before a response is sent. Global middlewares are registered in `middlewares/middlewares.php`. Route-level middlewares are applied in the route file itself.
-
-- **Controllers** — Decide how to process a request. Versioned alongside routes. A controller receives the HTTP request, passes it to a Data Transfer Object for validation, then hands off to a Model.
-
-- **Data Transfer Objects (DTOs)** — Represent data flowing in and out of your API. DTOs must be versioned — they form the API contract. Validating input here keeps controllers thin.
-
-- **Models** — Business logic. The layer between your controllers and your data stores or third-party services.
-
-- **Entities** — Code representations of your data schema. Doctrine entities live in `api/Entities/Doctrine/`. CouchDB document shapes live in `api/Entities/CouchDB/`.
-
-- **Dependencies** — Common classes registered in the DI container so they are instantiated once per request. Drivers are Kipchak's built-in dependency layer, initialised in `drivers/drivers.php`.
-
----
-
-## Drivers
-
-Drivers are adapters for external services. They are initialised in `drivers/drivers.php` and registered into the DI container. Config, Logger, and HTTP are initialised first as other drivers depend on them.
-
-The starter includes and demonstrates the following drivers:
-
-### Core
-
-| Driver       | Config file          | Description                                      |
-|--------------|----------------------|--------------------------------------------------|
-| Config       | —                    | Loads all PHP config files from `config/`. Always initialised first. |
-| Logger       | `kipchak.api.php`    | PSR-3 logger (Monolog). Available as `$this->logger` in all controllers. |
-| HTTP         | —                    | PSR-18 HTTP client for outbound requests. Used internally by several drivers. |
-
-### Data & Messaging
-
-| Driver       | Config file              | Demo route                   | Description                             |
-|--------------|--------------------------|------------------------------|-----------------------------------------|
-| Memcached    | `kipchak.memcached.php`  | `GET /v1/cache`              | Symfony Cache-backed Memcached pools    |
-| File Cache   | —                        | `GET /v1/cache`              | Symfony Cache file-based cache          |
-| CouchDB      | `kipchak.couchdb.php`    | `GET /v1/couch`              | Apache CouchDB 3.x document store       |
-| Doctrine     | `kipchak.doctrine.php`   | —                            | Doctrine DBAL and ORM for MySQL/MariaDB |
-| RabbitMQ     | `kipchak.rabbitmq.php`   | `GET /v1/rabbitmq/publish`   | RabbitMQ publisher and subscriber       |
-|              |                          | `GET /v1/rabbitmq/subscribe` |                                         |
-| S3           | `kipchak.s3.php`         | `GET /v1/s3`                 | S3-compatible object storage            |
-| Git          | `kipchak.git.php`        | `GET /v1/git`                | Git repository operations over HTTPS    |
-| SFTP         | `kipchak.sftp.php`       | `GET /v1/sftp`               | Batch file exchange over SFTP           |
-| Feature Flags | `kipchak.feature-flags.php` | `GET /v1/flags`          | Feature flags from Unleash, Flagsmith or GrowthBook |
-| ClickHouse   | `kipchak.clickhouse.php` | `GET /v1/clickhouse`         | Analytics queries and batched inserts (ClickHouse in `docker-compose.yml`) |
-| Vector       | `kipchak.vector.php`     | `GET /v1/vector`             | Similarity search over Qdrant, pgvector or OpenSearch (Qdrant in `docker-compose.yml`) |
-| NATS         | `kipchak.nats.php`       | `GET /v1/nats`               | Messaging, JetStream streams and key-value buckets (NATS in `docker-compose.yml`) |
-
-### AI
-
-| Driver       | Config file              | Demo route          | Description                                  |
-|--------------|--------------------------|---------------------|----------------------------------------------|
-| OpenAI       | `kipchak.openai.php`     | `GET /v1/openai`    | OpenAI chat completions with default model injection |
-| Anthropic    | `kipchak.anthropic.php`  | `GET /v1/anthropic` | Anthropic Claude messages with default model injection |
-
-### DNS
-
-| Driver          | Config file                  | Demo route                   | Description                         |
-|-----------------|------------------------------|------------------------------|-------------------------------------|
-| Cloudflare DNS  | `kipchak.cloudflare-dns.php` | `GET /v1/cloudflare-dns`     | Manage Cloudflare zones and records |
-| ClouDNS         | `kipchak.cloudns.php`        | `GET /v1/cloudns`            | Manage ClouDNS zones and records    |
-
----
-
-## Middlewares
-
-Middlewares are registered in `middlewares/middlewares.php` and apply globally to every request.
-
-| Middleware    | Config file            | Description                                                                 |
-|---------------|------------------------|-----------------------------------------------------------------------------|
-| Error         | —                      | Standardised JSON error responses for all unhandled exceptions              |
-| API Key       | `kipchak.auth.key.php` | Validates an API key from a header or query parameter. Disabled by default. |
-| JWKS          | `kipchak.auth.jwks.php`| Validates a Bearer JWT against a remote JWKS URI. Disabled by default.      |
-| Subashi (WAF) | `kipchak.subashi.php`  | Request firewall with OWASP rules, rate limiting, IP/header allow/blocklists. Enabled by default. |
-| Response Cache | `kipchak.response-cache.php` | HTTP cache (RFC 9111) with ETags and invalidation on writes. Caches only the routes it is attached to by default. |
-| Feature Flags | `kipchak.feature-flags.middleware.php` | Gates routes on feature flags, with each API key's client as the flag's user. |
-
-Authentication middlewares are disabled by default (`'enabled' => false`) so the demo routes are accessible without credentials. Set `'enabled' => true` in the relevant config file to activate.
-
-The starter also includes a demo of per-route middleware usage:
-
-| Route                | Middleware applied     |
-|----------------------|------------------------|
-| `GET /v1/authKey`    | API Key authentication |
-| `GET /v1/authJWKS`  | JWKS authentication    |
-| `GET /v1/cached`     | Response Cache, for 60 seconds: repeat the request and `X-Cache` says `HIT` |
-| `GET /v1/beta`       | API Key authentication, then a feature flag gate on `early-access`: `?apikey=key1` and `key2` get 200, `key3` gets 404 |
-
-Custom per-project middlewares can be added to `api/Middlewares/` and registered in `middlewares/middlewares.php` or applied directly in a route file.
-
----
-
-## Configuration
-
-All configuration lives in the `config/` directory as PHP files returning arrays. The Config driver loads every file in this directory at boot and makes them available via `Config::get('filename-without-extension')`.
-
-Environment variables are read using the `env()` helper:
-
-```php
-env('ENV_VAR_NAME', 'default-value')
+```json
+{"code": 200, "status": "OK", "data": {"id": 4, "name": "Baybars", "reignFrom": 1260, "reignTo": 1277}}
 ```
 
-| File                          | Purpose                                                   |
-|-------------------------------|-----------------------------------------------------------|
-| `kipchak.api.php`             | App name, debug mode, log level, exception logging        |
-| `kipchak.auth.key.php`        | API key authentication settings                           |
-| `kipchak.auth.jwks.php`       | JWKS URI and scope validation settings                    |
-| `kipchak.anthropic.php`       | Anthropic API key and default model                       |
-| `kipchak.clickhouse.php`      | ClickHouse host(s), database, credentials and settings    |
-| `kipchak.cloudflare-dns.php`  | Cloudflare API token(s)                                   |
-| `kipchak.cloudns.php`         | ClouDNS credentials                                       |
-| `kipchak.couchdb.php`         | CouchDB host, port, credentials, and database             |
-| `kipchak.doctrine.php`        | Doctrine DBAL connections and ORM entity manager settings |
-| `kipchak.feature-flags.php`   | Feature flag connections (Unleash, Flagsmith, GrowthBook) |
-| `kipchak.feature-flags.middleware.php` | Feature flag gates, and who each request is from     |
-| `kipchak.git.php`             | Git clone directory and named repository definitions      |
-| `kipchak.memcached.php`       | Memcached server pools and options                        |
-| `kipchak.nats.php`            | NATS servers, credentials, streams and key-value buckets  |
-| `kipchak.openai.php`          | OpenAI API key, organisation, project, and default model  |
-| `kipchak.rabbitmq.php`        | RabbitMQ connection and queue definitions                 |
-| `kipchak.response-cache.php`  | Response cache store, TTLs and invalidation               |
-| `kipchak.s3.php`              | S3-compatible endpoint(s), credentials, and region        |
-| `kipchak.sftp.php`            | SFTP server(s), credentials, and host key fingerprints    |
-| `kipchak.subashi.php`         | WAF rules: whitelist, blacklist, and rate limit rules     |
-| `kipchak.vector.php`          | Vector store connection(s) and embedding model            |
+Errors use the same envelope, from the Error middleware: throw one of Slim's HTTP exceptions, such as
+`HttpNotFoundException`, and the client receives `{"code": 404, "status": "RESOURCE_NOT_FOUND", "data": "..."}`.
 
----
+## OpenAPI
 
-## Writing Custom Controllers
+The OpenAPI document is generated from PHP attributes: operations on controller methods, schemas on DTOs, and the
+title and shared responses in `api/OpenApi/Definition.php`. `/openapi.json` serves it, and
 
-Controllers extend `Kipchak\Core\Components\Controllers\Base`, which provides:
-
-- `$this->container` — the DI container
-- `$this->logger` — the PSR-3 logger
-
-```php
-namespace Api\Controllers\v1;
-
-use Kipchak\Core\Components\Controllers;
-use Kipchak\Core\Components\Http;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-
-class Example extends Controllers\Base
-{
-    public function get(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
-    {
-        return Http\Response::json($response, ['hello' => 'world'], 200);
-    }
-}
+```bash
+composer openapi
 ```
 
-## Writing Custom Middlewares
+writes it to `openapi.yaml` for client generation or CI. A problem found while generating the document, such as a
+reference to a schema that does not exist, is logged by `/openapi.json`, and printed by `bin/openapi`, which then
+exits with 1.
 
-Custom middlewares implement `__invoke(ServerRequestInterface $request, RequestHandlerInterface $handler)` and can be applied globally in `middlewares/middlewares.php` or to a specific route group.
+## Tests
 
-```php
-$app->group('/v1', function (RouteCollectorProxy $group) {
-    $group->get('/protected', [Controllers\v1\Example::class, 'get'])
-          ->add(new MyCustomMiddleware());
-});
+```bash
+composer test
 ```
 
-## Registering Custom Dependencies
+The tests boot the API as a worker does and send requests to it without a web server; see `tests/ApiTestCase.php`.
 
-Add any class or service to the DI container in `drivers/drivers.php`:
+## Drivers and middleware
 
-```php
-$container->set('my.service', function (ContainerInterface $c) {
-    return new MyService();
-});
-```
+Drivers connect the API to other services: databases, caches, queues, object storage, AI models and more. Install
+one with Composer, add its config file to `config/` and initialise it in `drivers/drivers.php`. Middleware is added
+the same way in `middlewares/middlewares.php`. Each package's page on [kipchak.dev](https://kipchak.dev/ecosystem)
+gives its installation, configuration and use.
 
-Retrieve it anywhere you have access to the container:
+The [examples repository](https://1x.ax/mamluk/kipchak/examples) has a working route for every free driver and
+middleware, with a Docker Compose service for each one that needs a server.
 
-```php
-$service = $this->container->get('my.service');
-```
+## Worker mode
+
+FrankenPHP's worker mode boots the API once and keeps it in memory across requests, which makes it fast, but means
+anything stored in a static property or a global outlives the request. Keep request data in the request and in
+local variables. [Caddy and FrankenPHP](https://kipchak.dev/docs/caddy-and-frankenphp) describes the worker loop in
+`html/index.php` and how to run without worker mode.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).

@@ -1,22 +1,14 @@
 <?php
-// A Middleware added here will apply globally to every request.
-use Kipchak\Middleware\Subashi\Subashi;
+
 use Kipchak\Middleware\Error\Error;
-use Kipchak\Middleware\Auth\Key\Key;
-use Kipchak\Middleware\Auth\JWKS\JWKS;
-use Kipchak\Middleware\ResponseCache\ResponseCache;
-use Kipchak\Middleware\FeatureFlags\FeatureFlags;
 use Slim\App;
 
 /**
+ * Middleware initialised here applies to every request. Slim runs the last one added first, so initialise Error
+ * first: it then wraps every other middleware and turns any exception into a JSON error response. The middleware
+ * available for Kipchak is listed on https://kipchak.dev/docs/middleware.
+ *
  * @var App $app
  */
-Error::initialise($app);
-// Slim runs the last-added middleware first, so these run after authentication, and the feature flag gates in
-// config run before the response cache.
-ResponseCache::initialise($app);
-FeatureFlags::initialise($app);
-Key::initialise($app);
-JWKS::initialise($app);
-Subashi::initialise($app);
 
+Error::initialise($app);

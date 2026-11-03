@@ -3,108 +3,26 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    links:
-      - memcached
-      - mysql
-      - rabbitmq
-      - clickhouse
-      - qdrant
-      - nats
-    depends_on:
-      - memcached
-      - mysql
-      - rabbitmq
-      - clickhouse
-      - qdrant
-      - nats
     environment:
-      DEBUG: "true" # Any value equals true. To turn off debug mode, comment or delete this env var.
-      COUCHDB_HOST: "http://couchdb"
-      COUCHDB_PORT: "5984"
-      DB_USER: "api"
-      DB_PASSWORD: "api"
-      DB_NAME: "api"
-      DB_HOST: "mysql"
-      DB_PORT: "3306"
-      MEMCACHED_HOST: "memcached"
-      MEMCACHED_PORT: 11211
-      RABBITMQ_HOST: "rabbitmq"
-      RABBITMQ_PORT: "5672"
-      RABBITMQ_USERNAME: "kipchak"
-      RABBITMQ_PASSWORD: "kipchak"
-      CLICKHOUSE_URL: "http://clickhouse:8123"
-      CLICKHOUSE_USER: "api"
-      CLICKHOUSE_PASSWORD: "api"
-      QDRANT_URL: "http://qdrant:6333"
-      NATS_URL: "nats://nats:4222"
+      DEBUG: "true" # Any value turns debug mode on. To turn it off, delete this line.
     ports:
-      - "80:80"
-      - "2019:2019"
+      - "${PORT:-8080}:80" # PORT=8081 docker compose up uses another port
     develop:
       watch:
         - action: sync+restart
           path: .
           target: /var/www
-    privileged: true
-    container_name: api
+          ignore:
+            - vendor/
 
-  mysql:
-    image: mysql:8
-    environment:
-      MYSQL_ROOT_PASSWORD: "root"
-      MYSQL_USER: "api"
-      MYSQL_PASSWORD: "api"
-      MYSQL_DATABASE: "api"
-    container_name: mysql
-
-  couchdb:
-    image: couchdb:3.5
-    environment:
-      COUCHDB_USER: "api"
-      COUCHDB_PASSWORD: "api"
-    ports:
-      - "5984:5984"
-    container_name: couchdb
-
-  memcached:
-    image: memcached:1.6
-    container_name: memcached
-
-  rabbitmq:
-    image: rabbitmq:4.0.7-management
-    hostname: rabbitmq
-    volumes:
-      - ./etc/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-    environment:
-      RABBITMQ_DEFAULT_USER: kipchak
-      RABBITMQ_DEFAULT_PASS: kipchak
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    container_name: rabbitmq
-
-  clickhouse:
-    image: clickhouse/clickhouse-server:25.8
-    environment:
-      CLICKHOUSE_USER: "api"
-      CLICKHOUSE_PASSWORD: "api"
-    ulimits:
-      nofile:
-        soft: 262144
-        hard: 262144
-    ports:
-      - "8123:8123"
-    container_name: clickhouse
-
-  qdrant:
-    image: qdrant/qdrant:v1.15.5
-    ports:
-      - "6333:6333"
-    container_name: qdrant
-
-  nats:
-    image: nats:2.12
-    command: ["--jetstream", "--store_dir", "/data"]
-    ports:
-      - "4222:4222"
-    container_name: nats
+  # Add the services your API uses here, such as a database, and give them a profile if they are optional:
+  #
+  # mysql:
+  #   image: mysql:8.4
+  #   profiles: [database]
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: "root"
+  #     MYSQL_DATABASE: "api"
+  #
+  # `docker compose --profile database up` then starts it with the API. The examples repository has a Compose
+  # service for every Kipchak driver: https://1x.ax/mamluk/kipchak/examples

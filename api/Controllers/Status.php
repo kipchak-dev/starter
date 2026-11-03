@@ -1,35 +1,41 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Api\Controllers;
 
-use Kipchak\Core\Components\Controllers as CoreControllers;
+use Kipchak\Core\Components\Controllers;
 use Kipchak\Core\Components\Http;
+use OpenApi\Attributes as OA;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * All Controllers extending Controllers\Base Contain the Service / DI Container as a protected property called $container.
- * Access it using $this->container in your controller.
- * Default objects bundled into a container are:
- * logger - which returns an instance of \Monolog\Logger. This is also a protected property on your controller. Access it using $this->logger.
+ * A health check for load balancers and liveness probes.
  */
-
-class Status extends CoreControllers\Base
+final class Status extends Controllers\Base
 {
-
+    #[OA\Get(
+        path: '/status',
+        operationId: 'getStatus',
+        summary: 'Check that the API is running',
+        tags: ['Status'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'The API is running.',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'code', type: 'integer', example: 200),
+                    new OA\Property(property: 'status', type: 'string', example: 'OK'),
+                    new OA\Property(property: 'data', properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'alive'),
+                    ], type: 'object'),
+                ]),
+            ),
+        ],
+    )]
     public function get(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-
-        $this->logger->debug('Checking Status...');
-
-        return Http\Response::json($response,
-            [
-                'status' => 'alive'
-            ],
-            200,
-            true,
-            86400,
-        );
+        return Http\Response::json($response, ['status' => 'alive'], 200);
     }
-
 }

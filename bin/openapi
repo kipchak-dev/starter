@@ -1,0 +1,39 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Writes the OpenAPI document to a file, for CI and client generation:
+ *
+ *     php bin/openapi openapi.yaml
+ *     php bin/openapi openapi.json
+ *
+ * With no file name it prints the document as YAML. Problems found while validating the document are printed as
+ * warnings, and the exit code is 1 if there are any.
+ */
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use Api\Utils\OpenApi;
+use Psr\Log\AbstractLogger;
+
+$logger = new class extends AbstractLogger {
+    public int $warnings = 0;
+
+    public function log($level, string|\Stringable $message, array $context = []): void
+    {
+        $this->warnings++;
+        fwrite(STDERR, "{$level}: {$message}" . PHP_EOL);
+    }
+};
+
+$document = OpenApi::generate($logger);
+$file = $argv[1] ?? null;
+
+if ($file === null) {
+    echo $document->toYaml();
+} else {
+    $document->saveAs($file);
+    fwrite(STDERR, "Wrote {$file}" . PHP_EOL);
+}
+
+exit($logger->warnings === 0 ? 0 : 1);

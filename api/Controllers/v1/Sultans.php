@@ -1,55 +1,78 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Api\Controllers\v1;
 
-use Api\DataTransferObjects\v1\MamlukSultan;
+use Api\Models\Sultans as SultansModel;
 use Kipchak\Core\Components\Controllers;
 use Kipchak\Core\Components\Http;
 use OpenApi\Attributes as OA;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use CuyZ\Valinor as Data;
+use Slim\Exception\HttpNotFoundException;
+
 /**
- * All Controllers extending Controllers\Base Contain the Service / DI Container as a protected property called $container.
- * Access it using $this->container in your controller.
- * Default objects bundled into a container are:
- * logger - which returns an instance of \Monolog\Logger. This is also a protected property on your controller. Access it using $this->logger.
+ * Controllers are thin: they read the request, call a model and return a response. Each operation's attributes
+ * describe it in the OpenAPI document served at /openapi.json, and refer to DTO schemas rather than defining them.
+ *
+ * Every controller extending Controllers\Base has the DI container in $this->container and the Logger driver's
+ * logger in $this->logger.
  */
-
-class Sultans extends Controllers\Base
+#[OA\Tag(name: 'Sultans', description: 'The sultans of the Mamluk Sultanate.')]
+final class Sultans extends Controllers\Base
 {
-
-    public function get(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    #[OA\Get(
+        path: '/v1/sultans',
+        operationId: 'listSultans',
+        summary: 'List the sultans',
+        tags: ['Sultans'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Every sultan, in order of reign.',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'code', type: 'integer', example: 200),
+                    new OA\Property(property: 'status', type: 'string', example: 'OK'),
+                    new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/MamlukSultan')),
+                ]),
+            ),
+        ],
+    )]
+    public function list(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-
-        $this->logger->debug('Checking Sultans and DTOs...');
-
-        $sultan1 = [
-           'yearFrom'   => 1251,
-           'yearTo'     => 1257,
-            'name'      => 'Qutuz Al Din'
-        ];
-
-        $sultan2 = [
-            'yearFrom'   => 1257,
-            'yearTo'     => 1277,
-            'name'      => 'Baybars'
-        ];
-
-        $x1 = (new Data\MapperBuilder())
-            ->mapper()
-            ->map(MamlukSultan::class, Data\Mapper\Source\Source::array($sultan1));
-
-        $x2 = (new Data\MapperBuilder())
-            ->mapper()
-            ->map(MamlukSultan::class, Data\Mapper\Source\Source::array($sultan2));
-
-        return Http\Response::json($response,
-            [
-                'sultans' => [$x1, $x2]
-            ],
-            200
-        );
+        return Http\Response::json($response, (new SultansModel())->all(), 200);
     }
 
+    #[OA\Get(
+        path: '/v1/sultans/{id}',
+        operationId: 'getSultan',
+        summary: 'Get one sultan',
+        tags: ['Sultans'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer', example: 4)),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'The sultan.',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'code', type: 'integer', example: 200),
+                    new OA\Property(property: 'status', type: 'string', example: 'OK'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/MamlukSultan'),
+                ]),
+            ),
+            new OA\Response(response: 404, ref: '#/components/responses/NotFound'),
+        ],
+    )]
+    public function get(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $sultan = (new SultansModel())->find((int) $args['id']);
+        if ($sultan === null) {
+            // The Error middleware turns this into a 404 with the same envelope as every other response.
+            throw new HttpNotFoundException($request, "No sultan has the ID {$args['id']}.");
+        }
+
+        return Http\Response::json($response, $sultan, 200);
+    }
 }
