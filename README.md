@@ -103,7 +103,8 @@ The tests boot the API as a worker does and send requests to it without a web se
 
 Drivers connect the API to other services: databases, caches, queues, object storage, AI models and more. Install
 one with Composer, add its config file to `config/` and initialise it in `drivers/drivers.php`. Middleware is added
-the same way in `middlewares/middlewares.php`. Each package's page on [kipchak.dev](https://kipchak.dev/ecosystem)
+the same way in `middlewares/middlewares.php`, between its two `Error::initialise($app)` lines: the first turns an
+exception from a route into a JSON error response, and the last does the same for an exception from any middleware. Each package's page on [kipchak.dev](https://kipchak.dev/ecosystem)
 gives its installation, configuration and use.
 
 The [examples repository](https://1x.ax/mamluk/kipchak/examples) has a working route for every free driver and

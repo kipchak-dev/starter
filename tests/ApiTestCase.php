@@ -17,14 +17,20 @@ abstract class ApiTestCase extends TestCase
 {
     private static ?App $app = null;
 
+    /**
+     * The route files are loaded with require_once, so the app can only be booted once per process.
+     */
+    public static function app(): App
+    {
+        return self::$app ??= Api::boot();
+    }
+
     protected function request(string $method, string $path): ResponseInterface
     {
-        // The route files are loaded with require_once, so the app can only be booted once per process.
-        self::$app ??= Api::boot();
         $request = new ServerRequestFactory()->createServerRequest($method, $path)
             ->withHeader('Accept', 'application/json');
 
-        return self::$app->handle($request);
+        return self::app()->handle($request);
     }
 
     /**

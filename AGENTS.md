@@ -26,7 +26,7 @@ Documentation: <https://kipchak.dev>. An index for language models: <https://kip
 | `api/Middlewares/` | Middleware of this project's own (PSR-15). |
 | `config/` | One PHP file per driver or middleware, returning an array. Read with `Kipchak\Driver\Config\Config::get('kipchak.api')`. |
 | `drivers/drivers.php` | Initialises drivers, in order. Config first, then Logger. |
-| `middlewares/middlewares.php` | Middleware applied to every request. Slim runs the last added first. |
+| `middlewares/middlewares.php` | Middleware applied to every request. Slim runs the last added first. `Error::initialise($app)` is the first and the last line; add middleware between them. |
 | `tests/` | PHPUnit tests. Extend `Tests\ApiTestCase` and call `$this->request('GET', '/path')`. |
 
 ## Adding an endpoint

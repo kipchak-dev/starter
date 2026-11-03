@@ -6,6 +6,8 @@ ignore_user_abort(true);
 require_once (realpath(__DIR__ . '/../vendor/autoload.php'));
 
 use Kipchak\Core\Api;
+//use Doctrine\DBAL\Exception\ConnectionException;
+//use Doctrine\DBAL\Exception\ConnectionLost;
 //use Kipchak\Driver\Doctrine\Doctrine;
 
 // Instantiate Slim, load dependencies and middlewares
