@@ -5,6 +5,8 @@ PHP 8.4+ on Slim Framework 4, and runs on FrankenPHP in worker mode. Kipchak is 
 no facades, global helpers or hidden conventions, and everything an endpoint does is visible in this project's code.
 
 Documentation: <https://kipchak.dev>. An index for language models: <https://kipchak.dev/llms.txt>.
+Assistants that read Agent Skills can install the Kipchak skill, which covers Kipchak in general:
+<https://kipchak.dev/docs/ai-assistants>. This file describes this project.
 
 ## Commands
 
