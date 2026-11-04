@@ -91,6 +91,14 @@ writes it to `openapi.yaml` for client generation or CI. A problem found while g
 reference to a schema that does not exist, is logged by `/openapi.json`, and printed by `bin/openapi`, which then
 exits with 1.
 
+```bash
+vendor/bin/kipchak openapi:validate --strict
+```
+
+checks the document against the OpenAPI specification and against the routes the API registers: every route has an
+operation, every path parameter is declared, and every operation has an identifier, a summary and a tag. See
+[the CLI](https://kipchak.dev/docs/cli#kipchak-openapi-validate).
+
 ## Tests
 
 ```bash

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Api\Controllers;
 
+use Api\DataTransferObjects\ApiStatus;
 use Kipchak\Core\Components\Controllers;
 use Kipchak\Core\Components\Http;
 use OpenApi\Attributes as OA;
@@ -27,15 +28,13 @@ final class Status extends Controllers\Base
                 content: new OA\JsonContent(properties: [
                     new OA\Property(property: 'code', type: 'integer', example: 200),
                     new OA\Property(property: 'status', type: 'string', example: 'OK'),
-                    new OA\Property(property: 'data', properties: [
-                        new OA\Property(property: 'status', type: 'string', example: 'alive'),
-                    ], type: 'object'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/ApiStatus'),
                 ]),
             ),
         ],
     )]
     public function get(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        return Http\Response::json($response, ['status' => 'alive'], 200);
+        return Http\Response::json($response, new ApiStatus(), 200);
     }
 }

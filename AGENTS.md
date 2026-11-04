@@ -18,6 +18,12 @@ Assistants that read Agent Skills can install the Kipchak skill, which covers Ki
   `config/` and initialise it, with the drivers it requires. Use it rather than editing `drivers/drivers.php` or
   `middlewares/middlewares.php` by hand. `--dry-run` shows the changes first; it lists any settings, such as API keys,
   that must then be supplied.
+- `vendor/bin/kipchak make:resource Orders --fields=id:int,reference:string [--crud]`: write a resource in this
+  project's conventions (DTO, model, controller, routes, test). `make:endpoint POST '/v1/orders/{id:[0-9]+}/cancel'
+  Orders::cancel` adds an operation and its route to an existing controller; `make:dto`, `make:controller` and
+  `make:middleware` write one class each.
+- `vendor/bin/kipchak openapi:validate --strict`: check the OpenAPI document against the specification and against
+  the registered routes. It exits with 0 on this project; run it after changing an endpoint.
 
 ## Where things live
 
@@ -54,8 +60,8 @@ Follow `GET /v1/sultans` (`routes/v1/sultans.php`, `api/Controllers/v1/Sultans.p
    envelope `{"code", "status", "data"}`.
 4. **Route.** Register it in a file in `routes/v1/`: `$group->get('/path/{id:[0-9]+}', [Controller::class, 'method'])`.
 5. **Test.** Add a test in `tests/` for the success and error responses, and run `composer test`. The OpenAPI tests
-   check that every route is documented and that the document is valid; update the expected paths in
-   `tests/OpenApiTest.php` when adding one.
+   check that every route is documented and that the document is valid, so a route added without its operation
+   fails them.
 
 ## Rules
 

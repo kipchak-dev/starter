@@ -12,7 +12,7 @@
         "kipchak/middleware-error": "^1.32"
     },
     "require-dev": {
-        "kipchak/cli": "^1.0",
+        "kipchak/cli": "^1.1",
         "phpunit/phpunit": "^12"
     },
     "autoload": {
