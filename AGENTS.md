@@ -14,6 +14,10 @@ Assistants that read Agent Skills can install the Kipchak skill, which covers Ki
 - `composer test`: run the tests. Run them after every change.
 - `composer openapi`: write the OpenAPI document to `openapi.yaml`; exits with 1 if the document has problems.
 - `docker compose up --watch`: run the API on <http://localhost:8080>, restarting the worker when a file changes.
+- `vendor/bin/kipchak add <name>`: install a Kipchak driver or middleware (`doctrine`, `auth-key`), copy its config into
+  `config/` and initialise it, with the drivers it requires. Use it rather than editing `drivers/drivers.php` or
+  `middlewares/middlewares.php` by hand. `--dry-run` shows the changes first; it lists any settings, such as API keys,
+  that must then be supplied.
 
 ## Where things live
 
