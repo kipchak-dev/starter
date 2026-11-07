@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Api\Utils;
 
+use Kipchak\Core\OpenApi\Envelope;
 use OpenApi\Annotations\OpenApi as Document;
 use OpenApi\Generator;
+use OpenApi\Utils\Pipeline;
 use Psr\Log\AbstractLogger;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
@@ -15,6 +17,9 @@ use Stringable;
 /**
  * Builds the OpenAPI document from the attributes in api/. The same code serves /openapi.json and writes the file
  * in bin/openapi, so both always agree.
+ *
+ * Envelope documents each response as Kipchak sends it: a JSON success declared as its data alone is stated inside
+ * {code, status, data}, and a 4xx or 5xx that declares no content gets the error envelope of kipchak/middleware-error.
  */
 final class OpenApi
 {
@@ -23,7 +28,9 @@ final class OpenApi
      */
     public static function generate(?LoggerInterface $logger = null): Document
     {
-        $document = new Generator(self::problemsOnly($logger))->generate([dirname(__DIR__)]);
+        $document = new Generator(self::problemsOnly($logger))
+            ->withProcessorPipeline(fn (Pipeline $pipeline) => $pipeline->add(new Envelope(errors: true)))
+            ->generate([dirname(__DIR__)]);
         if ($document === null) {
             throw new RuntimeException('No OpenAPI attributes were found in api/.');
         }

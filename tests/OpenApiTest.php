@@ -54,6 +54,31 @@ final class OpenApiTest extends ApiTestCase
         );
     }
 
+    /**
+     * Controllers declare only the data; the document must state the envelope that the API actually sends.
+     */
+    public function testResponsesAreDocumentedInTheEnvelopeTheApiSends(): void
+    {
+        $document = $this->json($this->request('GET', '/openapi.json'));
+        $responses = $document['paths']['/v1/sultans/{id}']['get']['responses'];
+
+        $success = $responses['200']['content']['application/json']['schema']['allOf'];
+        self::assertSame('#/components/schemas/Success', $success[0]['$ref']);
+        self::assertSame(['$ref' => '#/components/schemas/MamlukSultan'], $success[1]['properties']['data']);
+        self::assertSame(['OK'], $success[1]['properties']['status']['enum']);
+
+        $error = $responses['404']['content']['application/json']['schema']['allOf'];
+        self::assertSame('#/components/schemas/Error', $error[0]['$ref']);
+        self::assertSame(['RESOURCE_NOT_FOUND'], $error[1]['properties']['status']['enum']);
+
+        $sent = $this->json($this->request('GET', '/v1/sultans/4'));
+        self::assertSame($document['components']['schemas']['Success']['required'], array_keys($sent));
+        self::assertSame([200, 'OK'], [$sent['code'], $sent['status']]);
+
+        $missing = $this->json($this->request('GET', '/v1/sultans/9999'));
+        self::assertSame([404, 'RESOURCE_NOT_FOUND'], [$missing['code'], $missing['status']]);
+    }
+
     public function testTheDocumentIsValid(): void
     {
         $logger = new class extends AbstractLogger {

@@ -25,11 +25,7 @@ final class Status extends Controllers\Base
             new OA\Response(
                 response: 200,
                 description: 'The API is running.',
-                content: new OA\JsonContent(properties: [
-                    new OA\Property(property: 'code', type: 'integer', example: 200),
-                    new OA\Property(property: 'status', type: 'string', example: 'OK'),
-                    new OA\Property(property: 'data', ref: '#/components/schemas/ApiStatus'),
-                ]),
+                content: new OA\JsonContent(ref: '#/components/schemas/ApiStatus'),
             ),
         ],
     )]

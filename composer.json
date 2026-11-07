@@ -6,7 +6,7 @@
     "license": "MIT",
     "require": {
         "php": ">=8.4",
-        "kipchak/core": "^3.15",
+        "kipchak/core": "^3.17.1",
         "kipchak/driver-config": "^1.33",
         "kipchak/driver-logger": "^1.38",
         "kipchak/middleware-error": "^1.32"
