@@ -47,15 +47,23 @@ Follow `GET /v1/sultans` (`routes/v1/sultans.php`, `api/Controllers/v1/Sultans.p
 `api/DataTransferObjects/v1/MamlukSultan.php`, `api/Models/Sultans.php`):
 
 1. **DTO.** Create or extend the DTO in `api/DataTransferObjects/v1/`, as a `final readonly` class with constructor
-   properties. Give the class `#[OA\Schema(schema: 'Name')]` and each property `#[OA\Property(...)]` with a
-   description and an example. The same DTO describes the request body and the response.
-2. **Model.** Put the logic in `api/Models/`. Map arrays into DTOs with Valinor
-   (`(new MapperBuilder())->mapper()->map(Dto::class, Source::array($data))`), which also validates them.
+   properties. Give the class `#[OA\Schema(schema: 'Name')]` and each property `#[Field(...)]` with a description and
+   an example. `Field` (`Kipchak\Core\Components\Dto\Field`) takes everything `OA\Property` takes. Write a rule once as
+   its `minLength`, `maxLength`, `minimum`, `maximum`, `pattern` or `enum`: the rule appears in the OpenAPI document and
+   is enforced on request bodies. For a rule an attribute cannot state, such as one that depends on the date, add
+   `#[Check([self::class, 'method'])]` and say what it does in the description. The server-set `id` stays
+   `#[OA\Property(...)]`. The same DTO describes the request body and the response.
+2. **Model.** Put the logic in `api/Models/`. Map stored rows into DTOs with Valinor
+   (`(new MapperBuilder())->mapper()->map(Dto::class, Source::array($data))`), which checks their types. It does not
+   enforce `Field` rules, so tightening a rule leaves old rows readable.
 3. **Controller.** Add a method to a controller in `api/Controllers/v1/` that extends
    `Kipchak\Core\Components\Controllers\Base`, with the signature
    `(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface`. Describe it
    with `#[OA\Get]`, `#[OA\Post]` and so on: path, `operationId`, summary, tags, parameters, request body and
    responses. Refer to schemas with `ref: '#/components/schemas/Name'`; never define a DTO's fields inline.
+   Read a request body with `Kipchak\Core\Components\Dto\Input::from($request, Dto::class, ['id' => 0])`, giving any
+   values the server sets. It enforces the `Field` rules and answers an invalid body with a 400 that lists every
+   problem at once, in `data` and by field in `meta.errors`. Do not catch that exception.
    Return `Kipchak\Core\Components\Http\Response::json($response, $data, 200)`, which wraps `$data` in the
    envelope `{"code", "status", "data"}`. Declare only the data in a response, such as
    `new OA\JsonContent(ref: '#/components/schemas/Name')`, and give an error response a description but no

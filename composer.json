@@ -6,13 +6,13 @@
     "license": "MIT",
     "require": {
         "php": ">=8.4",
-        "kipchak/core": "^3.17.1",
+        "kipchak/core": "^3.19",
         "kipchak/driver-config": "^1.33",
         "kipchak/driver-logger": "^1.38",
-        "kipchak/middleware-error": "^1.32"
+        "kipchak/middleware-error": "^1.36"
     },
     "require-dev": {
-        "kipchak/cli": "^1.2.3",
+        "kipchak/cli": "^1.3",
         "phpunit/phpunit": "^12"
     },
     "autoload": {
