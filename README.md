@@ -53,7 +53,7 @@ start it with `PORT=8081 docker compose up --watch`.
 │   ├── DataTransferObjects/  # The API contract: one DTO per shape of data, versioned with the controllers
 │   ├── Middlewares/          # Middleware of your own
 │   ├── Models/               # Business logic
-│   ├── OpenApi/              # The top of the OpenAPI document: title, version, servers
+│   ├── OpenApi/              # The top of the OpenAPI document: title, version, servers, shared responses
 │   └── Utils/                # Code shared across the API
 ├── bin/openapi               # Writes the OpenAPI document to a file
 ├── config/                   # One PHP file per driver or middleware, returning an array
@@ -81,7 +81,7 @@ Errors use the same envelope, from the Error middleware: throw one of Slim's HTT
 ## OpenAPI
 
 The OpenAPI document is generated from PHP attributes: operations on controller methods, schemas on DTOs, and the
-title in `api/OpenApi/Definition.php`. An operation declares only the data of each response;
+title and shared responses in `api/OpenApi/Definition.php`. An operation declares only the data of each response;
 `api/Utils/OpenApi.php` states the envelope around it, and gives an error response that declares no content the error
 envelope. `/openapi.json` serves it, and
 
