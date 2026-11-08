@@ -14,7 +14,8 @@ use RecursiveIteratorIterator;
  * OpenAPI document valid and its own tests passing. The CLI's templates refer to parts of the document, such as
  * #/components/responses/NotFound, so removing one of those breaks every project that scaffolds afterwards.
  *
- * The CLI writes into a copy of the project, never into this one.
+ * The CLI writes into a copy of the project, never into this one, and under a name of its own, so that the resources the
+ * project already has are left alone.
  */
 final class ScaffoldTest extends TestCase
 {
@@ -40,14 +41,27 @@ final class ScaffoldTest extends TestCase
 
     public function testAScaffoldedResourceLeavesTheDocumentValidAndItsTestsPassing(): void
     {
-        [$code, $output] = $this->inCopy(['vendor/bin/kipchak', 'make:resource', 'Caliphs', '--fields', 'id:int,name:string', '--no-interaction']);
+        $name = $this->probeName();
+        [$code, $output] = $this->inCopy(['vendor/bin/kipchak', 'make:resource', $name, '--fields', 'id:int,name:string', '--no-interaction']);
         self::assertSame(0, $code, $output);
 
         [$code, $output] = $this->inCopy(['vendor/bin/kipchak', 'openapi:validate', '--strict']);
         self::assertSame(0, $code, $output);
 
-        [$code, $output] = $this->inCopy([PHP_BINARY, 'vendor/bin/phpunit', '--colors=never', 'tests/CaliphsTest.php']);
+        [$code, $output] = $this->inCopy([PHP_BINARY, 'vendor/bin/phpunit', '--colors=never', "tests/{$name}Test.php"]);
         self::assertSame(0, $code, $output);
+    }
+
+    /**
+     * A resource name no project has: ScaffoldProbe and random letters, in the plural, checked against the copy.
+     */
+    private function probeName(): string
+    {
+        do {
+            $name = 'ScaffoldProbe' . ucfirst(substr(str_shuffle(str_repeat('abcdefghijklmnopqrstuvwxyz', 2)), 0, 8)) . 's';
+        } while (is_file("{$this->copy}/tests/{$name}Test.php") || is_file("{$this->copy}/api/Controllers/v1/{$name}.php"));
+
+        return $name;
     }
 
     /**

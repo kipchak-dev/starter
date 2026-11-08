@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b9518d77a50311aba50236c22efe4ff1",
+    "content-hash": "727b06477b4432cde55958ab0bce5d93",
     "packages": [
         {
             "name": "cuyz/valinor",
@@ -2514,16 +2514,16 @@
     "packages-dev": [
         {
             "name": "kipchak/cli",
-            "version": "1.1",
+            "version": "1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/kipchak-dev/cli.git",
-                "reference": "fbbd516769a555e100759d7aefe4e37d1a1a198c"
+                "reference": "94158c6926aa44eb2ec60779223f72d5b40f207b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/kipchak-dev/cli/zipball/fbbd516769a555e100759d7aefe4e37d1a1a198c",
-                "reference": "fbbd516769a555e100759d7aefe4e37d1a1a198c",
+                "url": "https://api.github.com/repos/kipchak-dev/cli/zipball/94158c6926aa44eb2ec60779223f72d5b40f207b",
+                "reference": "94158c6926aa44eb2ec60779223f72d5b40f207b",
                 "shasum": ""
             },
             "require": {
@@ -2565,9 +2565,9 @@
                 "scaffolding"
             ],
             "support": {
-                "source": "https://github.com/kipchak-dev/cli/tree/1.1"
+                "source": "https://github.com/kipchak-dev/cli/tree/1.2"
             },
-            "time": "2026-11-04T11:30:15+00:00"
+            "time": "2026-11-08T02:22:42+00:00"
         },
         {
             "name": "myclabs/deep-copy",

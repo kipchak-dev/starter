@@ -33,7 +33,7 @@ Assistants that read Agent Skills can install the Kipchak skill, which covers Ki
 | `api/Controllers/` | Controllers, namespace `Api\Controllers`; versioned ones in `v1/` (`Api\Controllers\v1`). |
 | `api/DataTransferObjects/` | DTOs, versioned like the controllers. They define the API contract. |
 | `api/Models/` | Business logic. |
-| `api/OpenApi/Definition.php` | OpenAPI title, version, servers and shared responses. |
+| `api/OpenApi/Definition.php` | OpenAPI title, version and servers. |
 | `api/Utils/` | Code shared across the API. |
 | `api/Middlewares/` | Middleware of this project's own (PSR-15). |
 | `config/` | One PHP file per driver or middleware, returning an array. Read with `Kipchak\Driver\Config\Config::get('kipchak.api')`. |
