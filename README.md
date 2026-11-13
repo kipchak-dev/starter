@@ -135,6 +135,18 @@ anything stored in a static property or a global outlives the request. Keep requ
 local variables. [Caddy and FrankenPHP](https://kipchak.dev/docs/caddy-and-frankenphp) describes the worker loop in
 `html/index.php` and how to run without worker mode.
 
+## Release notes
+
+### 4.8
+
+The commented Doctrine block in `html/index.php`, which checks the database connection with `SELECT 1` before each
+request, now skips that check for health paths (`/livez` and `/status`), so a liveness probe answers while the
+database is down. The comments also say to give the web worker a short MySQL read timeout with
+`ini_set('mysqlnd.net_read_timeout', ...)`: PDO has no read-timeout attribute for MySQL, and without it a request
+waits up to 86,400 seconds for a database that has stopped answering. Long-running commands, such as migrations, keep
+the default. See the [Doctrine driver](https://kipchak.dev/docs/driver-doctrine). The block stays commented out, so
+nothing changes for a project that has not enabled it.
+
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
