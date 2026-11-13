@@ -53,12 +53,14 @@ final class ScaffoldTest extends TestCase
     }
 
     /**
-     * A resource name no project has: ScaffoldProbe and random letters, in the plural, checked against the copy.
+     * A resource name no project has: ScaffoldProbe and random letters, in the plural, checked against the copy. It ends
+     * in "Items" so that its singular is plain: random letters ending in "s" would make "…ss", which the scaffolder
+     * reads as singular and rejects, because the model and its DTO would share the name.
      */
     private function probeName(): string
     {
         do {
-            $name = 'ScaffoldProbe' . ucfirst(substr(str_shuffle(str_repeat('abcdefghijklmnopqrstuvwxyz', 2)), 0, 8)) . 's';
+            $name = 'ScaffoldProbe' . ucfirst(substr(str_shuffle(str_repeat('abcdefghijklmnopqrstuvwxyz', 2)), 0, 8)) . 'Items';
         } while (is_file("{$this->copy}/tests/{$name}Test.php") || is_file("{$this->copy}/api/Controllers/v1/{$name}.php"));
 
         return $name;
