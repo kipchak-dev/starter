@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      DEBUG: "true" # Any value turns debug mode on. To turn it off, delete this line.
+      DEBUG: "true" # Debug mode, for local development. "false", or no DEBUG at all, turns it off.
     ports:
       - "${PORT:-8080}:80" # PORT=8081 docker compose up uses another port
     develop:
