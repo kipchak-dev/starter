@@ -2,6 +2,7 @@
 
 use Kipchak\Driver\Config\Config;
 use Kipchak\Driver\Logger\Logger;
+use Kipchak\Driver\Mcp\Mcp;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -14,3 +15,4 @@ use Psr\Container\ContainerInterface;
 
 Config::initialise($container);
 Logger::initialise($container);
+Mcp::initialise($container);

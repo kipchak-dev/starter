@@ -10,9 +10,13 @@ use Psr\Log\AbstractLogger;
 final class OpenApiTest extends ApiTestCase
 {
     /**
-     * Routes that are deliberately not in the document. The document does not describe itself.
+     * Routes that are deliberately not in the document. The document does not describe itself, and /mcp is the MCP
+     * protocol endpoint, which is not part of the REST surface.
      */
-    private const array UNDOCUMENTED = ['GET /openapi.json'];
+    private const array UNDOCUMENTED = [
+        'GET /openapi.json',
+        'GET /mcp', 'POST /mcp', 'PUT /mcp', 'PATCH /mcp', 'DELETE /mcp', 'OPTIONS /mcp',
+    ];
 
     public function testTheDocumentDescribesEveryRouteAndNoOther(): void
     {
