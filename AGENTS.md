@@ -90,5 +90,8 @@ Follow `GET /v1/sultans` (`routes/v1/sultans.php`, `api/Controllers/v1/Sultans.p
   example `Kipchak\Driver\Doctrine\Doctrine::get('entitymanager.primary')`.
 - Read settings from `config/` files and environment variables through `Kipchak\Core\env('NAME', 'default')`,
   never by calling `getenv()` in controllers or models.
+- CORS is set in `config/kipchak.cors.php` from `CORS_ALLOWED_ORIGINS`, and applied in `html/index.php` through
+  `Api\Utils\Cors`, which also answers browser preflight requests. Do not add `OPTIONS` routes or CORS headers in
+  controllers for this; list the origin instead.
 - Use the logger in controllers through `$this->logger` (Monolog, PSR-3).
 - An API change is a contract change: update the DTO and the controller's attributes together, then the tests.

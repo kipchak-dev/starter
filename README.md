@@ -36,6 +36,12 @@ docker compose up --watch
 The API is then on <http://localhost:8080>. `--watch` restarts the worker when a file changes. To use another port,
 start it with `PORT=8081 docker compose up --watch`.
 
+**A browser application on another site**, such as a front end on <http://localhost:5173>, can call the API only
+once its origin is listed in `CORS_ALLOWED_ORIGINS`: in `docker-compose.yml` for local work, and in your deployment's
+environment. Separate several with commas. Until then the API refuses those calls, and the first lines of the log
+say so (`CORS: no origins listed`). Calls from the same site, from servers and from curl need nothing. See
+`config/kipchak.cors.php` and <https://kipchak.dev/docs/starter#cors>.
+
 | Request | Response |
 |---|---|
 | `GET /v1/sultans` | Every sultan |
@@ -136,6 +142,15 @@ local variables. [Caddy and FrankenPHP](https://kipchak.dev/docs/caddy-and-frank
 `html/index.php` and how to run without worker mode.
 
 ## Release notes
+
+### 4.11
+
+A browser application on another site can now call the API with a sign-in token or a JSON body. The allowed sites
+come from `CORS_ALLOWED_ORIGINS` (`config/kipchak.cors.php`), empty by default, which sends no CORS headers; a listed
+origin is echoed, and `*` allows every origin without credentials. The list is checked when the worker starts, and
+the log states the mode. The browser's preflight request is answered before the router for every path that has
+routes, while `/mcp` keeps its own origin list and an unknown path still answers 404. Projects created from an
+earlier version keep their own `html/index.php`; see <https://kipchak.dev/docs/upgrades> to adopt the change.
 
 ### 4.8
 

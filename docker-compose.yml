@@ -6,6 +6,7 @@ services:
     environment:
       DEBUG: "true" # Debug mode, for local development. "false", or no DEBUG at all, turns it off.
       MCP_HOST: "localhost" # The host name MCP clients use. Set it when you deploy: other hosts are refused with 403.
+      # CORS_ALLOWED_ORIGINS: "http://localhost:5173" # Sites whose browser applications may call the API, comma-separated.
     ports:
       - "${PORT:-8080}:80" # PORT=8081 docker compose up uses another port
     develop:
