@@ -99,17 +99,28 @@ final readonly class Cors
     }
 
     /**
-     * A preflight this API answers itself, before the router: an OPTIONS request carrying
-     * Access-Control-Request-Method, to a path that has a route for other methods but none for OPTIONS. A route
-     * that answers OPTIONS itself, such as /mcp, and a path with no route at all, go to the router as before.
+     * What html/index.php does for one request, before the router:
+     *
+     * - a route that answers OPTIONS itself, such as /mcp, owns its CORS completely: no status and no headers here,
+     *   so that route's own origin list decides;
+     * - a preflight (an OPTIONS request carrying Access-Control-Request-Method) to a path that has routes, but none
+     *   for OPTIONS, is answered here with 204 and the preflight headers;
+     * - every other request goes to the router with the response headers. A path with no route still answers 404.
+     *
+     * @return array{0: ?int, 1: array<string, string>} the status to answer with now, or null to run the router; and
+     *                                                  the headers to send
      */
-    public static function answersPreflight(RouteResolverInterface $routes, string $method, string $path, ?string $requestMethod): bool
+    public function forRequest(RouteResolverInterface $routes, string $method, string $path, ?string $requestMethod, ?string $origin): array
     {
-        if (strtoupper($method) !== 'OPTIONS' || $requestMethod === null || $requestMethod === '') {
-            return false;
+        $optionsRoute = $routes->computeRoutingResults($path, 'OPTIONS')->getRouteStatus();
+        if ($optionsRoute === RoutingResults::FOUND) {
+            return [null, []];
+        }
+        if (strtoupper($method) === 'OPTIONS' && $requestMethod !== null && $requestMethod !== '' && $optionsRoute === RoutingResults::METHOD_NOT_ALLOWED) {
+            return [204, $this->preflightHeaders($origin)];
         }
 
-        return $routes->computeRoutingResults($path, 'OPTIONS')->getRouteStatus() === RoutingResults::METHOD_NOT_ALLOWED;
+        return [null, $this->responseHeaders($origin)];
     }
 
     /**

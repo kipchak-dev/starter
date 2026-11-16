@@ -66,19 +66,21 @@ $handler = static function () use ($app, $cors) {
 
     // CORS, from this request alone. A browser asks before a cross-origin call that carries a token or a JSON body
     // (a preflight); it is answered here, before the router, when the path has routes but none for OPTIONS. A route
-    // that answers OPTIONS itself, such as /mcp, and a path with no route, go to the router as before.
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? null;
-    $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/';
-    if (Cors::answersPreflight($app->getRouteResolver(), (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'), $path, $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'] ?? null)) {
-        http_response_code(204);
-        foreach ($cors->preflightHeaders($origin) as $name => $value) {
-            header("{$name}: {$value}");
-        }
+    // that answers OPTIONS itself, such as /mcp, keeps its own CORS, and a path with no route still answers 404.
+    [$status, $headers] = $cors->forRequest(
+        $app->getRouteResolver(),
+        (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'),
+        parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/',
+        $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'] ?? null,
+        $_SERVER['HTTP_ORIGIN'] ?? null,
+    );
+    foreach ($headers as $name => $value) {
+        header("{$name}: {$value}");
+    }
+    if ($status !== null) {
+        http_response_code($status);
 
         return;
-    }
-    foreach ($cors->responseHeaders($origin) as $name => $value) {
-        header("{$name}: {$value}");
     }
 
     try {

@@ -137,16 +137,30 @@ final class CorsTest extends ApiTestCase
         self::assertSame('600', $headers['Access-Control-Max-Age']);
     }
 
-    /** Option A: only a path with routes but none for OPTIONS is answered before the router, using the starter's own routes. */
+    /**
+     * Option A, against the starter's own routes: only a path with routes but none for OPTIONS gets the preflight
+     * answer, and a route that answers OPTIONS itself (/mcp) gets nothing from here at all.
+     */
     public function testOnlyAPathWithoutItsOwnOptionsRouteIsAnsweredBeforeTheRouter(): void
     {
         $routes = self::app()->getRouteResolver();
+        $cors = self::cors([self::LISTED]);
 
-        self::assertTrue(Cors::answersPreflight($routes, 'OPTIONS', '/v1/sultans', 'POST'), 'a known path');
-        self::assertTrue(Cors::answersPreflight($routes, 'OPTIONS', '/status', 'GET'));
-        self::assertFalse(Cors::answersPreflight($routes, 'OPTIONS', '/mcp', 'POST'), '/mcp answers OPTIONS itself');
-        self::assertFalse(Cors::answersPreflight($routes, 'OPTIONS', '/no/such/path', 'GET'), 'an unknown path goes to the router: 404');
-        self::assertFalse(Cors::answersPreflight($routes, 'OPTIONS', '/v1/sultans', null), 'an OPTIONS that is not a preflight goes to the router');
-        self::assertFalse(Cors::answersPreflight($routes, 'GET', '/v1/sultans', 'POST'), 'only OPTIONS');
+        [$status, $headers] = $cors->forRequest($routes, 'OPTIONS', '/v1/sultans', 'POST', self::LISTED);
+        self::assertSame(204, $status, 'a known path');
+        self::assertSame(self::LISTED, $headers['Access-Control-Allow-Origin']);
+        self::assertSame(204, $cors->forRequest($routes, 'OPTIONS', '/status', 'GET', self::LISTED)[0]);
+
+        self::assertSame([null, []], $cors->forRequest($routes, 'OPTIONS', '/mcp', 'POST', self::LISTED), '/mcp keeps its own CORS: no status, no headers');
+        self::assertSame([null, []], $cors->forRequest($routes, 'POST', '/mcp', null, self::LISTED), '/mcp keeps its own CORS on every method');
+
+        [$status, $headers] = $cors->forRequest($routes, 'OPTIONS', '/no/such/path', 'GET', self::LISTED);
+        self::assertNull($status, 'an unknown path goes to the router: 404');
+        self::assertArrayNotHasKey('Access-Control-Allow-Methods', $headers);
+
+        self::assertNull($cors->forRequest($routes, 'OPTIONS', '/v1/sultans', null, self::LISTED)[0], 'an OPTIONS that is not a preflight goes to the router');
+        [$status, $headers] = $cors->forRequest($routes, 'GET', '/v1/sultans', null, self::LISTED);
+        self::assertNull($status);
+        self::assertSame(self::LISTED, $headers['Access-Control-Allow-Origin'], 'an ordinary request gets the response headers');
     }
 }
