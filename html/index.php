@@ -21,7 +21,7 @@ $app->addBodyParsingMiddleware();
 
 // Which browser applications on other sites may call this API, from CORS_ALLOWED_ORIGINS (config/kipchak.cors.php).
 // The list is checked here, once: a bad entry stops the worker with a message naming it. The mode is written to the
-// log, so a CORS error in a browser can be traced to this line. See https://kipchak.dev/docs/starter#cors
+// log, so a CORS error in a browser can be traced to this line. See https://kipchak.dev/docs/starter-project#cors
 $cors = Cors::fromConfig(Config::get('kipchak.cors'));
 Logger::get()->info($cors->describe());
 

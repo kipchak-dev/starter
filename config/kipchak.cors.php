@@ -6,7 +6,7 @@ use function Kipchak\Core\env;
  * Which browser applications on other sites may call this API (CORS). Read by html/index.php through
  * Api\Utils\Cors, which checks the list when the worker starts and writes the mode to the log.
  *
- * See https://kipchak.dev/docs/starter#cors
+ * See https://kipchak.dev/docs/starter-project#cors
  */
 return [
     // Origins allowed to call this API from a browser, comma-separated in CORS_ALLOWED_ORIGINS, for example

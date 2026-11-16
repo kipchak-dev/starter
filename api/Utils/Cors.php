@@ -15,7 +15,7 @@ use Slim\Routing\RoutingResults;
  * sign. Everything else is computed per request from that request alone, so nothing about one caller's origin is
  * kept for the next request in worker mode.
  *
- * See https://kipchak.dev/docs/starter#cors
+ * See https://kipchak.dev/docs/starter-project#cors
  */
 final readonly class Cors
 {

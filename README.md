@@ -40,7 +40,7 @@ start it with `PORT=8081 docker compose up --watch`.
 once its origin is listed in `CORS_ALLOWED_ORIGINS`: in `docker-compose.yml` for local work, and in your deployment's
 environment. Separate several with commas. Until then the API refuses those calls, and the first lines of the log
 say so (`CORS: no origins listed`). Calls from the same site, from servers and from curl need nothing. See
-`config/kipchak.cors.php` and <https://kipchak.dev/docs/starter#cors>.
+`config/kipchak.cors.php` and <https://kipchak.dev/docs/starter-project#cors>.
 
 | Request | Response |
 |---|---|

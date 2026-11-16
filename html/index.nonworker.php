@@ -12,7 +12,7 @@ $app = Api::boot();
 $app->addBodyParsingMiddleware();
 
 // CORS, as in html/index.php: the list from CORS_ALLOWED_ORIGINS is checked, and a preflight to a path with routes
-// but none for OPTIONS is answered here. See https://kipchak.dev/docs/starter#cors
+// but none for OPTIONS is answered here. See https://kipchak.dev/docs/starter-project#cors
 $cors = Cors::fromConfig(Config::get('kipchak.cors'));
 [$status, $headers] = $cors->forRequest(
     $app->getRouteResolver(),
