@@ -5,7 +5,10 @@ ignore_user_abort(true);
 
 require_once (realpath(__DIR__ . '/../vendor/autoload.php'));
 
+use Api\Utils\Cors;
 use Kipchak\Core\Api;
+use Kipchak\Driver\Config\Config;
+use Kipchak\Driver\Logger\Logger;
 //use Doctrine\DBAL\Exception\ConnectionException;
 //use Doctrine\DBAL\Exception\ConnectionLost;
 //use Kipchak\Driver\Doctrine\Doctrine;
@@ -15,6 +18,12 @@ $app = Api::boot();
 
 // Add middleware once, outside the loop
 $app->addBodyParsingMiddleware();
+
+// Which browser applications on other sites may call this API, from CORS_ALLOWED_ORIGINS (config/kipchak.cors.php).
+// The list is checked here, once: a bad entry stops the worker with a message naming it. The mode is written to the
+// log, so a CORS error in a browser can be traced to this line. See https://kipchak.dev/docs/starter#cors
+$cors = Cors::fromConfig(Config::get('kipchak.cors'));
+Logger::get()->info($cors->describe());
 
 // If using Doctrine with MySQL, give web requests a short read timeout. PHP's MySQL client (mysqlnd) otherwise waits
 // up to 86,400 seconds for a database that stopped answering, and every request on the worker hangs with it. PDO has
@@ -31,7 +40,7 @@ $app->addBodyParsingMiddleware();
 // const NO_DATABASE_PATHS = ['/livez', '/status'];
 
 // Handler outside the loop for better performance (doing less work)
-$handler = static function () use ($app) {
+$handler = static function () use ($app, $cors) {
     // If using Doctrine, please add the following for each Entity Manager to allow clearing of Singleton Objects and to deal
     // with connectiont timeouts caused by FrankenPHP's long running process
     // $em = Doctrine::get('entitymanager.primary');
@@ -55,15 +64,22 @@ $handler = static function () use ($app) {
     // Reset Doctrine identity map on every request (FrankenPHP worker mode keeps one EM per process)
     // $em->clear();
 
-    /**
-     * Tweak these headers as needed, especially if you are going to use this API from a client side SPA
-     * without a Backend for Frontend
-     */
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    header('Access-Control-Allow-Credentials: true');
-    header('Access-Control-Allow-Headers: Authorization, origin, if-none-match');
-    header('Access-Control-Expose-Headers: *');
+    // CORS, from this request alone. A browser asks before a cross-origin call that carries a token or a JSON body
+    // (a preflight); it is answered here, before the router, when the path has routes but none for OPTIONS. A route
+    // that answers OPTIONS itself, such as /mcp, and a path with no route, go to the router as before.
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? null;
+    $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/';
+    if (Cors::answersPreflight($app->getRouteResolver(), (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'), $path, $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'] ?? null)) {
+        http_response_code(204);
+        foreach ($cors->preflightHeaders($origin) as $name => $value) {
+            header("{$name}: {$value}");
+        }
+
+        return;
+    }
+    foreach ($cors->responseHeaders($origin) as $name => $value) {
+        header("{$name}: {$value}");
+    }
 
     try {
         // Called when a request is received,
