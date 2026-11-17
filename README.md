@@ -155,16 +155,23 @@ included, so that you can see which build answered a request and a deploy job ca
 serving:
 
 ```shell
-docker build --build-arg BUILD_REF=2026-11-17-11-35+6d43f2f7e494 -t my-api .
+docker build --build-arg BUILD_REF="$(git describe --tags)" -t my-api .
 ```
 
-The value is a date tag, a plus sign and the first 12 characters of the commit, and the build fails for any other
-form. An image built without the argument sends no `X-Build` header, so a project that does not use it sends the same
+The value may be 1 to 64 letters, digits, dots, hyphens, plus signs and underscores, for example `v1.4.2`,
+`v1.4.2-3-gabc1234def56` or `2026-11-17-11-35+6d43f2f7e494`. The build fails for any other value, so that no quote,
+space or control character reaches the server configuration. An image built without the argument sends no `X-Build` header, so a project that does not use it sends the same
 responses as before. `tests/BuildMarkerTest.php` checks the Dockerfile and both Caddyfiles.
 [Deployment](https://kipchak.dev/docs/deployment#confirming-a-deploy) shows how a pipeline sets the value and checks
 it after a deploy.
 
 ## Release notes
+
+### 4.15
+
+`BUILD_REF` accepts any value of 1 to 64 letters, digits, dots, hyphens, plus signs and underscores, such as a
+release tag (`v1.4.2`) or the output of `git describe --tags`. In 4.14 it accepted only a date tag followed by a commit.
+To adopt the change, copy the `ARG BUILD_REF` block from the `Dockerfile`.
 
 ### 4.14
 

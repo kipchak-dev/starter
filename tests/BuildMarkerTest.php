@@ -17,8 +17,8 @@ use PHPUnit\Framework\TestCase;
  * - The header line is conditional. An unconditional `header X-Build {env.BUILD_REF}` sends an empty header when the
  *   variable is unset, and a build without the argument must send nothing.
  * - The line is in the :80 site block, which serves the API, and not in the metrics listener.
- * - BUILD_REF is declared in the final stage of the Dockerfile, empty by default, checked against the tag-and-commit
- *   format with a length test, and passed to the server as an environment variable.
+ * - BUILD_REF is declared in the final stage of the Dockerfile, empty by default, limited to 1 to 64 characters from a
+ *   safe set by a case pattern and a length test, and passed to the server as an environment variable.
  *
  * Each rule has a negative control: a copy with that one rule broken must be refused. The running image is not probed
  * here; build it with and without the argument and request any path to see the header.
@@ -27,7 +27,8 @@ final class BuildMarkerTest extends TestCase
 {
     private const string MATCHER = '@build expression `{env.BUILD_REF} != ""`';
     private const string HEADER = 'header @build X-Build {env.BUILD_REF}';
-    private const string FORMAT = "grep -Eqx '[0-9]{4}(-[0-9]{2}){4}\\+[0-9a-f]{12}'";
+    private const string CHARSET = "*[!A-Za-z0-9._+-]*) ";
+    private const string LENGTH = '[ "${#BUILD_REF}" -gt 64 ]';
 
     /** @return array<string, array{string}> */
     public static function caddyfiles(): array
@@ -86,8 +87,9 @@ final class BuildMarkerTest extends TestCase
     {
         return [
             'a default value' => [static fn (string $d): string => self::replaceOnce("ARG BUILD_REF=\n", "ARG BUILD_REF=unknown\n", $d), 'empty by default'],
-            'the format check removed' => [static fn (string $d): string => self::replaceOnce(self::FORMAT, 'true', $d), 'format check'],
-            'the length test removed' => [static fn (string $d): string => self::replaceOnce('[ "${#BUILD_REF}" -eq 29 ]', 'true', $d), 'length test'],
+            'the character check pointed at another value' => [static fn (string $d): string => self::replaceOnce('case "$BUILD_REF" in', 'case "" in', $d), 'character check'],
+            'the character set widened to a space' => [static fn (string $d): string => self::replaceOnce(self::CHARSET, "*[!A-Za-z0-9._+ -]*) ", $d), 'character check'],
+            'the length test removed' => [static fn (string $d): string => self::replaceOnce(self::LENGTH, 'false', $d), 'length test'],
             'the environment variable removed' => [static fn (string $d): string => self::replaceOnce("ENV BUILD_REF=\$BUILD_REF\n", '', $d), 'ENV BUILD_REF'],
             // A project that adds a production stage after this one must declare BUILD_REF there too.
             'declared in an earlier stage only' => [
@@ -149,11 +151,11 @@ final class BuildMarkerTest extends TestCase
         } elseif (($arg[1] ?? '') !== '=') {
             $problems[] = 'BUILD_REF must be empty by default, so that a build without it sends no header';
         }
-        if (!str_contains($final, self::FORMAT)) {
-            $problems[] = 'the format check on BUILD_REF is missing';
+        if (!str_contains($final, 'case "$BUILD_REF" in') || !str_contains($final, self::CHARSET)) {
+            $problems[] = 'the character check on BUILD_REF is missing or allows more than letters, digits, ".", "-", "+" and "_"';
         }
-        if (!str_contains($final, '[ "${#BUILD_REF}" -eq 29 ]')) {
-            $problems[] = 'the length test on BUILD_REF is missing, so a value with a newline would pass grep line by line';
+        if (!str_contains($final, self::LENGTH)) {
+            $problems[] = 'the length test on BUILD_REF (at most 64 characters) is missing';
         }
         if (preg_match('/^ENV BUILD_REF=\$BUILD_REF$/m', $final) !== 1) {
             $problems[] = 'ENV BUILD_REF=$BUILD_REF is missing, so the server cannot read the value';
