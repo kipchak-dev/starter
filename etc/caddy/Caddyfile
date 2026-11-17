@@ -48,6 +48,11 @@
 	root {$SERVER_ROOT}
 	encode
 
+	# The build marker: X-Build on every response, only when the image was built with BUILD_REF (see the Dockerfile).
+	# Without the matcher, an image built without it would send an empty X-Build header.
+	@build expression `{env.BUILD_REF} != ""`
+	header @build X-Build {env.BUILD_REF}
+
 	# Uncomment the following lines to enable Mercure and Vulcain modules
 	#mercure {
 	#	# Transport to use (default to Bolt)

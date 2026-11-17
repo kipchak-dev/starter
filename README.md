@@ -148,7 +148,31 @@ listener that answers nothing else. Set `METRICS_PORT` to use another port. Cadd
 (`admin off`): a running API never needs to change its configuration, and the administration API has no
 authentication. `tests/CaddyfileTest.php` fails if a Caddyfile turns it back on.
 
+## Build marker
+
+An image built with the `BUILD_REF` build argument sends it as an `X-Build` header on every response, error pages
+included, so that you can see which build answered a request and a deploy job can confirm that the new build is
+serving:
+
+```shell
+docker build --build-arg BUILD_REF=2026-11-17-11-35+6d43f2f7e494 -t my-api .
+```
+
+The value is a date tag, a plus sign and the first 12 characters of the commit, and the build fails for any other
+form. An image built without the argument sends no `X-Build` header, so a project that does not use it sends the same
+responses as before. `tests/BuildMarkerTest.php` checks the Dockerfile and both Caddyfiles.
+[Deployment](https://kipchak.dev/docs/deployment#confirming-a-deploy) shows how a pipeline sets the value and checks
+it after a deploy.
+
 ## Release notes
+
+### 4.14
+
+An image built with `--build-arg BUILD_REF=<date tag>+<12-character commit>` sends that value as an `X-Build` header
+on every response. Without the argument, nothing changes. To adopt it in an existing project, copy the `ARG BUILD_REF`
+block from the `Dockerfile` and the two `@build` lines from the `:80` block of `etc/caddy/Caddyfile`. Copy both
+Caddyfile lines: a `header` line without the `@build` matcher sends an empty `X-Build` header when the argument is
+not set.
 
 ### 4.12
 
