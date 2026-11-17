@@ -141,7 +141,24 @@ anything stored in a static property or a global outlives the request. Keep requ
 local variables. [Caddy and FrankenPHP](https://kipchak.dev/docs/caddy-and-frankenphp) describes the worker loop in
 `html/index.php` and how to run without worker mode.
 
+## Metrics
+
+Prometheus metrics, including FrankenPHP's worker and thread metrics, are served at `/metrics` on port 2019 by a
+listener that answers nothing else. Set `METRICS_PORT` to use another port. Caddy's administration API is off
+(`admin off`): a running API never needs to change its configuration, and the administration API has no
+authentication. `tests/CaddyfileTest.php` fails if a Caddyfile turns it back on.
+
 ## Release notes
+
+### 4.12
+
+Caddy's administration API is off, and Prometheus metrics stay on port 2019, served by a listener that answers
+`/metrics` and returns 404 for every other path. Before 4.12, both Caddyfiles set `admin :2019`, which opened the
+administration API on every network interface of the container. Monitoring keeps the same port and path. To adopt the
+change in an existing project, replace `admin :2019` with `admin off` as the last option of the global block, and add
+the `:{$METRICS_PORT:2019}` block from `etc/caddy/Caddyfile`. Do not keep `admin :2019` beside the new block: Caddy
+lets the two share the port, and some connections would still reach the administration API. The steps are on
+[Upgrading](https://kipchak.dev/docs/upgrades).
 
 ### 4.11
 

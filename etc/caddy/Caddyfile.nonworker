@@ -10,8 +10,6 @@
 
     metrics
 
-    admin :2019
-
 	frankenphp {
 		{$FRANKENPHP_CONFIG}
         num_threads 2 # Sets the number of PHP threads to start. Default: 2x the number of available CPUs.
@@ -19,6 +17,11 @@
 		max_wait_time 60s # Sets the maximum time a request may wait for a free PHP thread before timing out. Default: disabled.
 		# php_ini <key> <value> # Set a php.ini directive. Can be used several times to set multiple directives.
 	}
+
+	# The administration API is off: the configuration never changes in a running container. It stays the last
+	# option in this block, after every placeholder, because Caddy takes the last admin option it reads
+	# (tests/CaddyfileTest.php).
+	admin off
 }
 
 {$CADDY_EXTRA_CONFIG}
@@ -58,6 +61,17 @@
 
 	php_server {
 		#worker /path/to/your/worker.php
+	}
+}
+
+# Prometheus metrics only, on port 2019. Every other path answers 404, and there is no administration endpoint.
+# The global "metrics" option above records what this serves. Set METRICS_PORT to use another port.
+:{$METRICS_PORT:2019} {
+	handle /metrics {
+		metrics
+	}
+	handle {
+		respond 404
 	}
 }
 
